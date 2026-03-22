@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Project specific
+.claude/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Config (Keep this ignored if you put secrets here)
+js/config.js
+.env
