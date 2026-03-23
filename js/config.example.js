@@ -17,5 +17,13 @@ window.APP_CONFIG = {
 
     // AI Study Advisor Configuration (e.g. Google Gemini or Groq)
     advisorKey: "YOUR_AI_API_KEY_HERE",
-    advisorProvider: "groq" // Options: 'gemini', 'nvidia', 'groq'
+    advisorProvider: "groq", // Options: 'gemini', 'nvidia', 'groq'
+
+    // Firebase Configuration (for auth & cloud grade sync)
+    firebaseApiKey: "YOUR_FIREBASE_API_KEY",
+    firebaseAuthDomain: "YOUR_PROJECT.firebaseapp.com",
+    firebaseProjectId: "YOUR_PROJECT_ID",
+    firebaseStorageBucket: "YOUR_PROJECT.appspot.com",
+    firebaseMessagingSenderId: "YOUR_SENDER_ID",
+    firebaseAppId: "YOUR_FIREBASE_APP_ID"
 };

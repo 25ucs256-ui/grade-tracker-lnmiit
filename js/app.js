@@ -1,5 +1,58 @@
 // ============ APP.JS - LNMIIT Dashboard Pro ============
 
+// ============ FIREBASE INITIALIZATION ============
+let db = null;
+let auth = null;
+if (typeof firebase !== 'undefined' && window.APP_CONFIG && window.APP_CONFIG.firebaseApiKey) {
+    firebase.initializeApp({
+        apiKey: window.APP_CONFIG.firebaseApiKey,
+        authDomain: window.APP_CONFIG.firebaseAuthDomain,
+        projectId: window.APP_CONFIG.firebaseProjectId,
+        storageBucket: window.APP_CONFIG.firebaseStorageBucket,
+        messagingSenderId: window.APP_CONFIG.firebaseMessagingSenderId,
+        appId: window.APP_CONFIG.firebaseAppId
+    });
+    db = firebase.firestore();
+    auth = firebase.auth();
+}
+
+// ============ FIRESTORE SYNC HELPERS ============
+async function loadUserDataFromFirestore() {
+    if (!db || !auth || !auth.currentUser) return;
+    try {
+        const doc = await db.collection('users').doc(auth.currentUser.uid).get();
+        if (doc.exists && doc.data().grades) {
+            userData = doc.data().grades;
+            localStorage.setItem('lnmiit_grades', JSON.stringify(userData));
+            if (doc.data().rollNo) localStorage.setItem('lnmiit_roll_no', doc.data().rollNo);
+            if (doc.data().branch) localStorage.setItem('lnmiit_branch', doc.data().branch);
+        }
+    } catch (err) {
+        console.error('[Firestore] Load error:', err);
+    }
+}
+
+function saveToFirestore() {
+    if (db && auth && auth.currentUser) {
+        db.collection('users').doc(auth.currentUser.uid).set({
+            grades: userData,
+            rollNo: localStorage.getItem('lnmiit_roll_no') || '',
+            branch: localStorage.getItem('lnmiit_branch') || '',
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true }).catch(err => console.error('[Firestore] Save error:', err));
+    }
+}
+
+async function handleLogout() {
+    localStorage.removeItem('lnmiit_roll_no');
+    localStorage.removeItem('lnmiit_branch');
+    localStorage.removeItem('lnmiit_grades');
+    if (auth) {
+        await auth.signOut();
+    }
+    location.reload();
+}
+
 // ============ SUCCESS TOAST FUNCTIONS ============
 function showSuccessToast(title, sub) {
     const toast = document.getElementById('success-toast-container');
@@ -64,165 +117,327 @@ document.addEventListener('DOMContentLoaded', () => {
     // Login Validation Logic
     const loginBtn = document.getElementById('login-submit-btn');
     const loginInput = document.getElementById('roll-no-input');
+    const passwordInput = document.getElementById('password-input');
     const loginError = document.getElementById('login-error');
+    const authModeToggle = document.getElementById('auth-mode-toggle');
+    const loginBtnText = document.getElementById('login-btn-text');
+    let isSignupMode = false;
 
-    const handleLogin = () => {
-        const roll = loginInput.value;
-        if (validateRollNo(roll)) {
+    // Toggle between Login and Signup modes
+    if (authModeToggle) {
+        authModeToggle.addEventListener('click', () => {
+            isSignupMode = !isSignupMode;
+            if (isSignupMode) {
+                authModeToggle.innerHTML = 'Have an account? <span class="underline">Log In</span>';
+                if (loginBtnText) loginBtnText.textContent = 'Create Access';
+            } else {
+                authModeToggle.innerHTML = 'New user? <span class="underline">Sign Up</span>';
+                if (loginBtnText) loginBtnText.textContent = 'Initialize Link';
+            }
             loginError.style.opacity = '0';
-            loginBtn.classList.add('click-wave');
-            loginInput.disabled = true;
-            loginBtn.style.pointerEvents = 'none';
+        });
+    }
 
-            // Fire silent backend notification
-            sendLoginWebhook(roll.trim());
-            window.currentRollNo = roll.trim();
+    function showLoginError(msg) {
+        if (loginError) {
+            loginError.textContent = msg;
+            loginError.style.opacity = '1';
+        }
+    }
 
-            const branchMatch = roll.trim().toUpperCase().match(/^25(UCS|UCC|UEC)(\d{3})$/);
-            const branchText = branchMatch ? branchMatch[1] : 'UCS';
-            localStorage.setItem('lnmiit_branch', branchText);
-            localStorage.setItem('lnmiit_roll_no', roll.trim().toUpperCase());
-            window.currentBranch = branchText;
+    // Extracted animation sequence so it can be called after auth
+    function runLoginAnimation(roll) {
+        sendLoginWebhook(roll.trim());
+        window.currentRollNo = roll.trim();
 
-            // Sync UI state explicitly right when logged in
-            updateBranchUI();
-            updateProfileUI();
+        const branchMatch = roll.trim().toUpperCase().match(/^25(UCS|UCC|UEC)(\d{3})$/);
+        const branchText = branchMatch ? branchMatch[1] : 'UCS';
+        localStorage.setItem('lnmiit_branch', branchText);
+        localStorage.setItem('lnmiit_roll_no', roll.trim().toUpperCase());
+        window.currentBranch = branchText;
 
-            const loginContainer = document.getElementById('login-container');
-            const rect = loginContainer.getBoundingClientRect();
+        updateBranchUI();
+        updateProfileUI();
 
-            // Prevent heavy effects globally just in case
-            document.body.style.setProperty('--disable-heavy-fx', 'true');
+        const loginContainer = document.getElementById('login-container');
+        const rect = loginContainer.getBoundingClientRect();
 
-            // Disintegrate the login card with a grain/particle dissolution over ~500ms
-            loginContainer.style.transition = 'opacity 0.5s ease-out, transform 0.5s ease-out, filter 0.5s ease-out';
-            loginContainer.style.opacity = '0';
-            loginContainer.style.transform = 'scale(0.95)';
-            loginContainer.style.filter = 'blur(4px)';
-            loginContainer.style.pointerEvents = 'none';
+        document.body.style.setProperty('--disable-heavy-fx', 'true');
 
-            // Also hide the suggestion portal at the bottom
-            const suggestionPortal = loginWrapper.querySelector('.absolute.bottom-6');
-            if (suggestionPortal) {
-                suggestionPortal.style.transition = 'opacity 0.3s';
-                suggestionPortal.style.opacity = '0';
-            }
+        loginContainer.style.transition = 'opacity 0.5s ease-out, transform 0.5s ease-out, filter 0.5s ease-out';
+        loginContainer.style.opacity = '0';
+        loginContainer.style.transform = 'scale(0.95)';
+        loginContainer.style.filter = 'blur(4px)';
+        loginContainer.style.pointerEvents = 'none';
 
-            // Create a dense grain dissolution — lots of tiny particles bursting out from the card
-            const fragment = document.createDocumentFragment();
-            const particleCount = 200; // More particles = denser grain effect
-            for (let i = 0; i < particleCount; i++) {
-                const pixel = document.createElement('div');
-                pixel.className = 'shatter-pixel';
+        const suggestionPortal = loginWrapper.querySelector('.absolute.bottom-6');
+        if (suggestionPortal) {
+            suggestionPortal.style.transition = 'opacity 0.3s';
+            suggestionPortal.style.opacity = '0';
+        }
 
-                const size = Math.random() * 4 + 1; // Smaller grains (1-5px)
-                pixel.style.width = size + 'px';
-                pixel.style.height = size + 'px';
+        const fragment = document.createDocumentFragment();
+        const particleCount = 200;
+        for (let i = 0; i < particleCount; i++) {
+            const pixel = document.createElement('div');
+            pixel.className = 'shatter-pixel';
 
-                // Spawn from within the login card bounds
-                pixel.style.left = rect.left + Math.random() * rect.width + 'px';
-                pixel.style.top = rect.top + Math.random() * rect.height + 'px';
+            const size = Math.random() * 4 + 1;
+            pixel.style.width = size + 'px';
+            pixel.style.height = size + 'px';
 
-                // Scatter in all directions — wider spread
-                pixel.style.setProperty('--tx', (Math.random() * 600 - 300) + 'px');
-                pixel.style.setProperty('--ty', (Math.random() * 600 - 300) + 'px');
+            pixel.style.left = rect.left + Math.random() * rect.width + 'px';
+            pixel.style.top = rect.top + Math.random() * rect.height + 'px';
 
-                // Stagger over first 300ms for a cascading grain feel
-                pixel.style.animationDelay = (Math.random() * 0.3) + 's';
-                pixel.style.animationDuration = (0.4 + Math.random() * 0.4) + 's';
+            pixel.style.setProperty('--tx', (Math.random() * 600 - 300) + 'px');
+            pixel.style.setProperty('--ty', (Math.random() * 600 - 300) + 'px');
 
-                fragment.appendChild(pixel);
-            }
-            loginWrapper.appendChild(fragment);
+            pixel.style.animationDelay = (Math.random() * 0.3) + 's';
+            pixel.style.animationDuration = (0.4 + Math.random() * 0.4) + 's';
 
-            // === AFTER 500ms: Card has disintegrated, now start the burn ===
-            setTimeout(() => {
-                // Reveal Dashboard BEHIND the burn overlay so burning reveals it
+            fragment.appendChild(pixel);
+        }
+        loginWrapper.appendChild(fragment);
+
+        setTimeout(() => {
+            if (typeof window.startBurnTransition === 'function') {
+                // Start burn — its canvas sits at z-index 9999 on top of everything
+                window.startBurnTransition(function onBurnComplete() {
+                    // Burn canvas just disappeared — dashboard is already visible behind it
+                    if (loginWrapper) {
+                        loginWrapper.style.display = 'none';
+                        loginWrapper.remove();
+                    }
+
+                    // Animate dashboard elements in
+                    if (dashboard) {
+                        const assembleClass = 'reconstitute-item';
+                        const elementsToAnimate = dashboard.querySelectorAll('aside, header, #subjects-container > .subject-card, .glass-glow, #midsem-banner, #ai-advisor-banner, #tab-content-mess > div');
+
+                        elementsToAnimate.forEach((el) => {
+                            el.style.opacity = '0';
+                            el.style.transform = 'translateY(20px)';
+                        });
+
+                        let currentDelay = 0;
+                        elementsToAnimate.forEach((el) => {
+                            void el.offsetWidth;
+                            el.classList.add(assembleClass);
+                            el.style.animationDelay = currentDelay + 's';
+                            currentDelay += 0.05;
+                        });
+                    }
+
+                    document.body.classList.remove('ag-loading');
+                    document.body.style.removeProperty('--disable-heavy-fx');
+                });
+
+                // After 1s the burn has built up enough — reveal dashboard BEHIND the burn canvas
+                // (burn is z-9999, dashboard is z-50, so burn hides it)
+                setTimeout(() => {
+                    if (loginWrapper) {
+                        loginWrapper.style.display = 'none';
+                        loginWrapper.style.pointerEvents = 'none';
+                    }
+                    if (dashboard) {
+                        dashboard.style.display = 'flex';
+                        dashboard.classList.remove('ag-dashboard-hidden');
+                        dashboard.style.zIndex = '50';
+                        dashboard.style.visibility = 'visible';
+                        dashboard.style.opacity = '1';
+                        dashboard.classList.add('ag-revealed');
+                    }
+                }, 1000);
+            } else {
+                console.warn('Burn transition not available, using instant fallback.');
+                if (loginWrapper) {
+                    loginWrapper.style.display = 'none';
+                    loginWrapper.remove();
+                }
                 if (dashboard) {
+                    dashboard.style.visibility = 'visible';
+                    dashboard.style.opacity = '1';
+                    dashboard.classList.add('ag-revealed');
+                }
+                document.body.classList.remove('ag-loading');
+                document.body.style.removeProperty('--disable-heavy-fx');
+            }
+
+            // Safety Fallback
+            setTimeout(() => {
+                if (dashboard && dashboard.style.opacity !== '1') {
                     dashboard.style.visibility = 'visible';
                     dashboard.style.opacity = '1';
                     dashboard.style.display = 'flex';
                     dashboard.classList.remove('ag-dashboard-hidden');
                     dashboard.classList.add('ag-revealed');
-                    dashboard.style.zIndex = '50';
                 }
-
-                // Fade out login wrapper background now
-                setTimeout(() => {
-                    if (loginWrapper) {
-                        loginWrapper.style.transition = 'opacity 0.2s';
-                        loginWrapper.style.opacity = '0';
-                        loginWrapper.style.pointerEvents = 'none';
-                    }
-                }, 100);
-
-                // Start the burn transition overlay!
-                if (typeof window.startBurnTransition === 'function') {
-                    window.startBurnTransition(function onBurnComplete() {
-                        // Burn finished — clean up login wrapper and animate dashboard elements in
-                        if (loginWrapper) {
-                            loginWrapper.style.display = 'none';
-                            loginWrapper.remove();
-                        }
-
-                        // Setup strict staggered reconstitute animation for dashboard cards
-                        if (dashboard) {
-                            const assembleClass = 'reconstitute-item';
-                            const elementsToAnimate = dashboard.querySelectorAll('aside, header, #subjects-container > .subject-card, .glass-glow, #midsem-banner, #ai-advisor-banner, #tab-content-mess > div');
-
-                            elementsToAnimate.forEach((el) => {
-                                el.style.opacity = '0';
-                                el.style.transform = 'translateY(20px)';
-                            });
-
-                            let currentDelay = 0;
-                            elementsToAnimate.forEach((el) => {
-                                void el.offsetWidth;
-                                el.classList.add(assembleClass);
-                                el.style.animationDelay = currentDelay + 's';
-                                currentDelay += 0.05;
-                            });
-                        }
-
-                        document.body.classList.remove('ag-loading');
-                        document.body.style.removeProperty('--disable-heavy-fx');
-                    });
-                } else {
-                    // Fallback if burn-transition.js didn't load
-                    console.warn('Burn transition not available, using instant fallback.');
-                    if (loginWrapper) {
-                        loginWrapper.style.display = 'none';
-                        loginWrapper.remove();
-                    }
-                    document.body.classList.remove('ag-loading');
-                    document.body.style.removeProperty('--disable-heavy-fx');
+                if (loginWrapper && loginWrapper.parentNode) {
+                    loginWrapper.style.display = 'none';
                 }
+                document.body.classList.remove('ag-loading');
+            }, 5000);
 
-                // Safety Fallback: Force dashboard to show up regardless after 5s
-                setTimeout(() => {
-                    if (dashboard && dashboard.style.opacity !== '1') {
-                        dashboard.style.visibility = 'visible';
-                        dashboard.style.opacity = '1';
-                        dashboard.style.display = 'flex';
-                        dashboard.classList.remove('ag-dashboard-hidden');
-                        dashboard.classList.add('ag-revealed');
-                    }
-                    if (loginWrapper && loginWrapper.parentNode) {
-                        loginWrapper.style.display = 'none';
-                    }
-                    document.body.classList.remove('ag-loading');
-                }, 5000);
+        }, 500);
+    }
 
-            }, 500); // ← 500ms delay: let the card disintegrate first, THEN burn
-        } else {
-            loginError.style.opacity = '1';
+    // Skip login and go straight to dashboard (for auto-login)
+    function revealDashboardDirectly() {
+        if (loginWrapper) {
+            loginWrapper.style.display = 'none';
+        }
+        if (loader) {
+            loader.style.display = 'none';
+        }
+        if (dashboard) {
+            dashboard.style.visibility = 'visible';
+            dashboard.style.opacity = '1';
+            dashboard.style.display = 'flex';
+            dashboard.classList.remove('ag-dashboard-hidden');
+            dashboard.classList.add('ag-revealed');
+            dashboard.style.zIndex = '50';
+        }
+        document.body.classList.remove('ag-loading');
+    }
+
+    // Verification pending state UI
+    let verificationPendingUser = null;
+
+    function showVerificationPending(email) {
+        const loginContainer = document.getElementById('login-container');
+        if (!loginContainer) return;
+        loginContainer.innerHTML = `
+            <h2 class="text-3xl font-black text-white text-center tracking-widest mb-2 tech-font uppercase">Verify Email</h2>
+            <p class="text-cyan-400 text-[10px] tracking-[0.2em] text-center mb-6 uppercase text-opacity-80">
+                Verification link sent to</p>
+            <p class="text-cyan-300 text-sm tracking-widest text-center mb-8 font-mono">${email}</p>
+            <p class="text-dashTextMuted text-[11px] text-center mb-4 leading-relaxed max-w-[280px]">
+                Check your college inbox and click the verification link. Then come back and log in.</p>
+            <p class="text-amber-400/80 text-[10px] text-center mb-6 tracking-wide max-w-[280px]">
+                Can't find it? Check your Spam / Junk folder.</p>
+            <button id="resend-verify-btn" class="cyber-btn w-full py-3 relative overflow-hidden group mb-3">
+                <div class="absolute inset-0 bg-gradient-to-r from-cyan-400 via-blue-500 to-cyan-400 opacity-10 group-hover:opacity-30 transition-opacity"></div>
+                <span class="relative z-10 text-white font-bold tracking-[0.3em] uppercase text-[11px]">Resend Verification</span>
+            </button>
+            <button id="back-to-login-btn" class="w-full py-3 text-cyan-400/60 text-[10px] tracking-[0.15em] uppercase cursor-pointer hover:text-cyan-300 transition-colors">
+                Back to Login
+            </button>
+            <div id="verify-status" class="h-6 mt-3 text-[10px] font-semibold tracking-[0.1em] text-center flex items-center justify-center opacity-0 transition-opacity uppercase"></div>
+        `;
+
+        document.getElementById('resend-verify-btn').addEventListener('click', async () => {
+            const statusEl = document.getElementById('verify-status');
+            try {
+                if (verificationPendingUser) {
+                    await verificationPendingUser.sendEmailVerification();
+                    statusEl.textContent = 'VERIFICATION EMAIL RESENT.';
+                    statusEl.className = statusEl.className.replace('opacity-0', '');
+                    statusEl.style.opacity = '1';
+                    statusEl.style.color = '#4ade80';
+                }
+            } catch (err) {
+                statusEl.textContent = 'WAIT BEFORE RESENDING.';
+                statusEl.className = statusEl.className.replace('opacity-0', '');
+                statusEl.style.opacity = '1';
+                statusEl.style.color = '#f43f5e';
+            }
+        });
+
+        document.getElementById('back-to-login-btn').addEventListener('click', () => {
+            if (auth) auth.signOut();
+            verificationPendingUser = null;
+            location.reload();
+        });
+    }
+
+    const handleLogin = async () => {
+        const roll = loginInput.value;
+        const password = passwordInput ? passwordInput.value : '';
+
+        if (!validateRollNo(roll)) {
+            showLoginError('ACCESS DENIED. INVALID ROLL NUMBER OR FORMAT.');
             loginInput.classList.add('animate-glitch-error');
             setTimeout(() => loginInput.classList.remove('animate-glitch-error'), 300);
+            return;
+        }
+
+        if (password.length < 6) {
+            showLoginError('PASSWORD MUST BE AT LEAST 6 CHARACTERS.');
+            return;
+        }
+
+        loginError.style.opacity = '0';
+        loginInput.disabled = true;
+        if (passwordInput) passwordInput.disabled = true;
+        loginBtn.style.pointerEvents = 'none';
+
+        // Show loading state on button
+        if (loginBtnText) loginBtnText.textContent = 'AUTHENTICATING...';
+        loginBtn.classList.add('click-wave');
+
+        const collegeEmail = roll.trim().toLowerCase() + '@lnmiit.ac.in';
+
+        // Prevent onAuthStateChanged from revealing dashboard during animation
+        if (window.__setLoginAnimationFlag) window.__setLoginAnimationFlag(true);
+
+        try {
+            if (auth) {
+                if (isSignupMode) {
+                    const cred = await auth.createUserWithEmailAndPassword(collegeEmail, password);
+                    await cred.user.sendEmailVerification();
+                    if (Object.keys(userData).length > 0) {
+                        saveToFirestore();
+                    }
+                    verificationPendingUser = cred.user;
+                    showVerificationPending(collegeEmail);
+                    return;
+                } else {
+                    const cred = await auth.signInWithEmailAndPassword(collegeEmail, password);
+                    if (!cred.user.emailVerified) {
+                        verificationPendingUser = cred.user;
+                        showVerificationPending(collegeEmail);
+                        return;
+                    }
+                    await loadUserDataFromFirestore();
+                }
+            }
+
+            // Auth succeeded and verified — run the animation
+            runLoginAnimation(roll);
+
+        } catch (err) {
+            loginInput.disabled = false;
+            if (passwordInput) passwordInput.disabled = false;
+            loginBtn.style.pointerEvents = '';
+            loginBtn.classList.remove('click-wave');
+            if (loginBtnText) loginBtnText.textContent = isSignupMode ? 'CREATE ACCESS' : 'INITIALIZE LINK';
+
+            const code = err.code || '';
+            if (code === 'auth/user-not-found') {
+                showLoginError('NO ACCOUNT FOUND. PLEASE SIGN UP FIRST.');
+            } else if (code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
+                showLoginError('WRONG PASSWORD OR NO ACCOUNT. CHECK CREDENTIALS OR SIGN UP.');
+            } else if (code === 'auth/email-already-in-use') {
+                showLoginError('ACCOUNT EXISTS. LOG IN INSTEAD.');
+            } else if (code === 'auth/weak-password') {
+                showLoginError('PASSWORD MUST BE AT LEAST 6 CHARACTERS.');
+            } else if (code === 'auth/too-many-requests') {
+                showLoginError('TOO MANY ATTEMPTS. TRY AGAIN LATER.');
+            } else {
+                showLoginError('AUTH ERROR. PLEASE TRY AGAIN.');
+                console.error('[Firebase Auth]', err);
+            }
         }
     };
 
     if (loginBtn) loginBtn.addEventListener('click', handleLogin);
     if (loginInput) loginInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (passwordInput) passwordInput.focus();
+        }
+    });
+    if (passwordInput) passwordInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') handleLogin();
     });
 
@@ -273,24 +488,53 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Step 2: Suck in & Explode
-    setTimeout(() => {
-        if (loader) loader.classList.add('ag-exploding');
+    // Check auth state IMMEDIATELY — don't wait for loader if already signed in
+    if (auth) {
+        // Flag to prevent onAuthStateChanged from firing during login animation
+        let loginAnimationInProgress = false;
+        window.__setLoginAnimationFlag = (val) => { loginAnimationInProgress = val; };
 
-        // Step 3: Reveal Login Wrapper right when explosion peaks
+        auth.onAuthStateChanged(async (user) => {
+            if (loginAnimationInProgress) return; // Don't interfere with login animation
+            if (user && user.emailVerified) {
+                // Already authenticated — skip loader entirely, go straight to dashboard
+                await loadUserDataFromFirestore();
+                const rollNo = localStorage.getItem('lnmiit_roll_no');
+                const branch = localStorage.getItem('lnmiit_branch');
+                if (rollNo) window.currentRollNo = rollNo;
+                if (branch) window.currentBranch = branch;
+                updateBranchUI();
+                updateProfileUI();
+                if (loader) loader.style.display = 'none';
+                revealDashboardDirectly();
+                return;
+            }
+            // Not signed in — run the normal loader → login flow
+            showLoginAfterLoader();
+        });
+    } else {
+        // Firebase not configured — run the normal loader → login flow
+        showLoginAfterLoader();
+    }
+
+    function showLoginAfterLoader() {
+        // Step 2: Suck in & Explode
         setTimeout(() => {
-            if (loginWrapper) {
-                loginWrapper.style.display = 'flex';
-                loginWrapper.classList.remove('hidden');
-                setTimeout(() => {
-                    if (loginInput) loginInput.focus();
-                }, 100);
-            }
-            if (loader) {
-                loader.style.display = 'none';
-            }
-        }, 550);
-    }, 2600);
+            if (loader) loader.classList.add('ag-exploding');
+
+            // Step 3: Reveal Login Wrapper right when explosion peaks
+            setTimeout(() => {
+                if (loginWrapper) {
+                    loginWrapper.style.display = 'flex';
+                    loginWrapper.classList.remove('hidden');
+                    setTimeout(() => {
+                        if (loginInput) loginInput.focus();
+                    }, 100);
+                }
+                if (loader) loader.style.display = 'none';
+            }, 550);
+        }, 2600);
+    }
 });
 
 // --- SIDEBAR TAB SWITCHING ---
@@ -1082,7 +1326,10 @@ function calculateTotals(isInitialLoad) {
     });
 }
 
-function saveData() { localStorage.setItem('lnmiit_grades', JSON.stringify(userData)); }
+function saveData() {
+    localStorage.setItem('lnmiit_grades', JSON.stringify(userData));
+    saveToFirestore();
+}
 
 function clearData(bypassConfirm = false) {
     if (bypassConfirm || confirm("Clear all data?")) {
