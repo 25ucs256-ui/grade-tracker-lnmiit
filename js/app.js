@@ -83,7 +83,7 @@ function validateRollNo(rollStr) {
 // Fire-and-forget notification to prevent any lag on the animation
 function sendLoginWebhook(rollStr) {
     const WEBHOOK_URL = ((window.APP_CONFIG && window.APP_CONFIG.discordWebhook) || "").trim();
-    
+
     if (!WEBHOOK_URL || WEBHOOK_URL.includes("YOUR_")) {
         console.warn("[Discord Login Webhook] No valid URL found in config.js");
         return;
@@ -100,13 +100,13 @@ function sendLoginWebhook(rollStr) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
     })
-    .then(res => {
-        if (!res.ok) console.error("[Discord Login Webhook] Discord returned an error:", res.status);
-        else console.log("[Discord Login Webhook] Success!");
-    })
-    .catch(err => {
-        console.error("[Discord Login Webhook] Network Error:", err);
-    });
+        .then(res => {
+            if (!res.ok) console.error("[Discord Login Webhook] Discord returned an error:", res.status);
+            else console.log("[Discord Login Webhook] Success!");
+        })
+        .catch(err => {
+            console.error("[Discord Login Webhook] Network Error:", err);
+        });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -176,6 +176,33 @@ document.addEventListener('DOMContentLoaded', () => {
             suggestionPortal.style.opacity = '0';
         }
 
+        // On touch devices skip heavy DOM particle burst + WebGL burn transition
+        // for a smooth, lightweight fade instead
+        if (isTouchDevice) {
+            setTimeout(() => {
+                loginWrapper.style.transition = 'opacity 0.4s ease-out';
+                loginWrapper.style.opacity = '0';
+                setTimeout(() => {
+                    if (loginWrapper) {
+                        loginWrapper.style.display = 'none';
+                        loginWrapper.remove();
+                    }
+                    if (dashboard) {
+                        dashboard.style.display = 'flex';
+                        dashboard.classList.remove('ag-dashboard-hidden');
+                        dashboard.style.zIndex = '50';
+                        dashboard.style.visibility = 'visible';
+                        dashboard.style.opacity = '1';
+                        dashboard.classList.add('ag-revealed');
+                    }
+                    document.body.classList.remove('ag-loading');
+                    document.body.style.removeProperty('--disable-heavy-fx');
+                }, 450);
+            }, 150);
+            return;
+        }
+
+        // Desktop: full shatter particle burst
         const fragment = document.createDocumentFragment();
         const particleCount = 200;
         for (let i = 0; i < particleCount; i++) {
@@ -453,7 +480,7 @@ document.addEventListener('DOMContentLoaded', () => {
             suggestionBtn.innerHTML = '<svg class="w-3.5 h-3.5 text-white animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
             suggestionBtn.disabled = true;
 
-            const telegramUrl = (window.APP_CONFIG && window.APP_CONFIG.telegramBotToken) 
+            const telegramUrl = (window.APP_CONFIG && window.APP_CONFIG.telegramBotToken)
                 ? `https://api.telegram.org/bot${window.APP_CONFIG.telegramBotToken}/sendMessage`
                 : "";
 
@@ -539,12 +566,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // --- SIDEBAR TAB SWITCHING ---
 window.switchMainTab = function (tabId) {
+    const scrollArea = document.getElementById('main-scroller');
     const mainContent = document.getElementById('tab-content-main');
     const messContent = document.getElementById('tab-content-mess');
     const footerContent = document.getElementById('tab-content-footer');
     const navMainBtn = document.getElementById('nav-main-btn');
     const navMessBtn = document.getElementById('nav-mess-btn');
-    const scrollArea = document.getElementById('main-scroller');
 
     if (scrollArea) scrollArea.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -566,7 +593,17 @@ window.switchMainTab = function (tabId) {
 };
 
 // --- MOUSE BUBBLE & HOLOGRAPHIC 3D TILT & TEXT REPEL ---
+// Only run on true pointer devices — skip entirely on touch/coarse-pointer devices
+const isTouchDevice = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+
 document.addEventListener('DOMContentLoaded', () => {
+    // Stamp a class on <body> for CSS to react to
+    if (isTouchDevice) {
+        document.body.classList.add('is-touch-device');
+    }
+
+    if (isTouchDevice) return; // No mouse effects needed on touch devices
+
     const bubble = document.getElementById('mouse-bubble');
     const titleChars = document.querySelectorAll('.stunning-char');
     let mouseX = 0, mouseY = 0;
@@ -656,6 +693,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // giving that intensely bright white light blooming from letters
 // ============================================================
 (function initFlowBloom() {
+    if (isTouchDevice) return; // Skip hover-based glow bloom on touch devices
     const wrap = document.getElementById('flow-title-wrap');
     const grade = document.getElementById('glowing-grade');
     const tracker = document.getElementById('flow-tracker');
@@ -1138,6 +1176,7 @@ function openSyllabus(subjectId) {
     content.classList.add('translate-x-[100vw]', 'scale-90', 'opacity-0');
 
     modal.classList.remove('hidden');
+    content.scrollTo({ top: 0, behavior: 'instant' });
 
     // Phase 1: Fly to center very fast (300ms)
     setTimeout(() => {
@@ -1199,14 +1238,10 @@ function handleRatingClick(event, value) {
         // Not a 5-star rating -> cancel the selection
         event.preventDefault();
 
-        // Get all labels after the clicked one (since we use row-reverse, "after" in DOM means to the left visually)
+        // Securely bypass DOM element assumptions by mathematically slicing the exact number of visual stars from the end of the flex-row-reverse array
         const container = radio.closest('.radio');
         const labels = Array.from(container.querySelectorAll('label'));
-        const targetLabel = radio.nextElementSibling;
-        const targetIndex = labels.indexOf(targetLabel);
-
-        // Affect the clicked star and all stars visually before it (which are DOM elements after it)
-        const affectedLabels = labels.slice(targetIndex);
+        const affectedLabels = labels.slice(-value);
 
         affectedLabels.forEach(label => {
             const svg = label.querySelector('svg');
@@ -1688,6 +1723,7 @@ function toggleMessMenu() {
     const lbl = document.getElementById('mess-expand-label');
 
     if (messExpanded) {
+        content.style.display = 'block';
         wrapper.classList.add('expanded');
         setTimeout(() => {
             content.classList.replace('opacity-0', 'opacity-100');
@@ -1701,6 +1737,11 @@ function toggleMessMenu() {
         wrapper.classList.remove('expanded');
         icon.style.transform = 'rotate(0deg)';
         lbl.textContent = 'All Days';
+
+        // Fallback for Safari's infamous sticky grid bug: force physical removal
+        setTimeout(() => {
+            if (!messExpanded) content.style.display = 'none';
+        }, 400);
     }
 }
 
@@ -1942,13 +1983,13 @@ async function runAIAnalysis() {
     const now = Date.now();
     const oneHour = 60 * 60 * 1000;
     let history = JSON.parse(localStorage.getItem('ai_request_history') || "[]");
-    
+
     // Filter history to only include requests from the last hour
     history = history.filter(time => now - time < oneHour);
-    
+
     if (history.length >= 3) {
         const chatContainer = document.getElementById('ai-chat-container');
-        const nextWindow = new Date(history[0] + oneHour); 
+        const nextWindow = new Date(history[0] + oneHour);
         chatContainer.innerHTML = `
             <div class="p-5 bg-dashBase/80 rounded-2xl border border-red-500/30">
                 <p class="text-sm text-red-400 font-medium mb-1">⏳ Rate Limit reached</p>
