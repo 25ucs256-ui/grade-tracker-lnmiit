@@ -1592,57 +1592,57 @@ const messMenu = [
     {
         day: 'Sunday',
         breakfast: ['Samosa (L)', 'Jalebi', 'Imli Chutney', 'Green chutney / Omelet (L)', 'Sprouts', 'White Bread (PeanutButter / Butter / Jam)*', 'Tea', 'Milk', 'Cornflakes / Bournvita / Coffee', 'Fruit (L)'],
-        lunch: ['Chole Bhature', 'Plain & Butter Roti', 'Fried Rice', 'Salad', 'Mixed Pickle', 'Fried Masala Mirchi', 'Lassi (L)'],
-        snacks: ['Bread Rolls (2Pcs)', 'Green Chutney', 'Ketchup', 'Shikanji', 'Tea'],
-        dinner: ['Kaddu Masala / Arbi Masala / Baigan Aloo (Alternate)', 'Masoor Dal', 'Curd Rice', 'Plain & Butter Roti', 'Salad', 'Mango Pickle', 'Milkrose (L)']
+        lunch: ['Chole Bhature', 'Plain & Butter Roti', 'Lemon Rice', 'Salad', 'Mixed Pickle', 'Fried Masala Mirchi', 'Lassi (L)'],
+        snacks: ['Aloo Pyaj Pakode', 'Ketchup', 'Thandai', 'Tea'],
+        dinner: ['Kaddu Masala / Arbi Masala / Baigan Aloo (Alternate)', 'Masoor Dal', 'Veg Biryani', 'Plain & Butter Roti', 'Salad', 'Mango Pickle', 'Milkrose (L)']
     },
     // Monday (1)
     {
         day: 'Monday',
         breakfast: ['Pav Bhaji / Omelet (L)', 'Sprouts', 'Brown Bread (Peanut Butter / Butter / Jam)*', 'Tea', 'Milk', 'Elaichi Powder', 'Cornflakes / Coffee', 'Fruit (L)'],
-        lunch: ['Khoya Paneer', 'Dal Arhar', 'Plain & Butter Roti', 'Missi Roti', 'Plain Rice', 'Raw Onion', 'Lemon Pickle', 'Fryums', 'Boondi Raita (L)'],
-        snacks: ['Papadi Chaat', 'Green Chutney', 'Imli Chutney', 'Dahi', 'Tea', 'Thandai'],
-        dinner: ['Dum Aloo', 'Dal Makhni', 'Pudina Rice', 'Plain & Butter Roti', 'Salad', 'Lemon Pickle', 'Gulab Jamun (L)']
+        lunch: ['Matar Paneer', 'Dal Arhar', 'Plain & Butter Roti', 'Missi Roti', 'Plain Rice', 'Raw Onion', 'Lemon Pickle', 'Fryums', 'Boondi Raita (L)'],
+        snacks: ['Aloo Sandwich', 'Ketchup', 'Milkrose', 'Tea'],
+        dinner: ['Malai Kofta', 'Moong Dal', 'Veg Biryani', 'Plain & Butter Roti', 'Salad', 'Mixed Pickle', 'Ice Cream (L)']
     },
     // Tuesday (2)
     {
         day: 'Tuesday',
-        breakfast: ['Namkeen Poha', 'White Bread (Peanut Butter / Butter / Jam)*', 'Tea', 'Milk', 'Cornflakes / Bournvita / Coffee', 'Fruit (L)', 'Boiled Sprouts'],
-        lunch: ['Rajma', 'Lauki Tamatar', 'Plain & Butter Roti', 'Missi Roti', 'Plain Rice', 'Salad', 'Mixed Pickle', 'Fryums', 'Coconut Barfi (L)', 'Pineapple Raita (L)'],
-        snacks: ['Veg Sandwich', 'Ketchup', 'Milkrose', 'Tea'],
-        dinner: ['Sev Tamatar', 'Urad Daal Tadka', 'Plain & Butter Roti', 'Fried Rice', 'Salad', 'Lemon Pickle', 'Sama Rice Kheer (L)']
+        breakfast: ['Sambhar Vada with Chutney', 'Sprouts', 'White Bread (Peanut Butter / Butter / Jam)*', 'Tea', 'Milk', 'Cornflakes / Bournvita / Coffee', 'Fruit (L)'],
+        lunch: ['Mix Veg', 'Dal Makhani', 'Pudina Rice', 'Plain & Butter Roti', 'Missi Roti', 'Salad', 'Mango Pickle', 'Suji Halwa (L)', 'Papad', 'Veg Raita (L)'],
+        snacks: ['Pasta', 'Ketchup', 'Cold Coffee', 'Tea'],
+        dinner: ['Aloo Chhole / Sev Tamatar (Alternate)', 'Urad Daal Tadka', 'Plain & Butter Roti', 'Fried Rice', 'Salad', 'Lemon Pickle', 'Sama Rice Kheer (L)']
     },
     // Wednesday (3)
     {
         day: 'Wednesday',
-        breakfast: ['Aaloo Paratha with curd', 'Garlic Chutney / Boiled Eggs (L)', 'Sprouts', 'White Bread (Peanut Butter / Butter / Jam)*', 'Tea', 'Kesar Badam Powder', 'Milk Cornflakes / Coffee', 'Fruit (L)'],
-        lunch: ['Mix Veg', 'Dal Makhani', 'Pudina Rice', 'Plain & Butter Roti', 'Missi Roti', 'Salad', 'Mango Pickle', 'Suji Halwa (L)', 'Papad', 'Veg Raita (L)'],
-        snacks: ['White sauce Pasta', 'Ketchup', 'Cold Coffee', 'Tea'],
-        dinner: ['Paneer Lababdar', 'Urad Daal', 'Jeera Rice', 'Plain & Butter Roti', 'Salad', 'Lemon Pickle', 'Fruit Custard (L)']
+        breakfast: ['Bedmi Puri & Aloo Sabji / Boiled Eggs (L)', 'Sprouts', 'White Bread (Peanut Butter / Butter / Jam)*', 'Tea', 'Kesar Badam Milk', 'Cornflakes / Coffee', 'Fruit (L)'],
+        lunch: ['Rajma', 'Lauki Tamatar', 'Plain & Butter Roti', 'Missi Roti', 'Plain Rice', 'Salad', 'Mixed Pickle', 'Fryums', 'Coconut Barfi (L)', 'Boondi Raita (L)'],
+        snacks: ['Aloo Pyaz Kachori with kadhi', 'Tea', 'Rasna'],
+        dinner: ['Paneer Lababdar', 'Daal Tadka', 'Jeera Rice', 'Plain & Butter Roti', 'Salad', 'Lemon Pickle', 'Fruit Custard (L)']
     },
     // Thursday (4)
     {
         day: 'Thursday',
-        breakfast: ['Sambhar Vada with Chutney / Omelet (L)', 'Sprouts', 'Brown Bread (Peanut Butter / Butter / Jam)*', 'Tea', 'Milk', 'Cornflakes / Bournvita / Coffee', 'Fruit (L)'],
+        breakfast: ['Namkeen Poha / Omelet (L)', 'Sprouts', 'Brown Bread (Peanut Butter / Butter / Jam)*', 'Tea', 'Milk', 'Cornflakes / Bournvita / Coffee', 'Fruit (L)'],
         lunch: ['Kadhi Pakora', 'Aloo Bhujia', 'Jeera Rice', 'Plain & Butter Roti', 'Missi Roti', 'Salad', 'Lemon Pickle', 'Papad'],
-        snacks: ['Veg Burger', 'Ketchup', 'Tea', 'Rasna'],
-        dinner: ['Malai Kofta', 'Moong-Mogar Dal', 'Veg Biryani', 'Plain & Butter Roti', 'Salad', 'Lemon Pickle', 'Boondi Ladoo(L)']
+        snacks: ['Veg Burger', 'Ketchup', 'Tea', 'Vanila Shake'],
+        dinner: ['Dum Aloo', 'Dal Makhni', 'Pudina Rice', 'Plain & Butter Roti', 'Salad', 'Mixed Pickle', 'Gulab Jamun (L)']
     },
     // Friday (5)
     {
         day: 'Friday',
-        breakfast: ['Matar Kulcha / Boiled Eggs (L)', 'Sprouts', 'White Bread (Peanut Butter / Butter / Jam)*', 'Tea', 'Milk', 'Cornflakes / Bournvita / Haldi / Coffee', 'Fruit (L)'],
-        lunch: ['Dry Chole Masala', 'Moong Dal Tamatar', 'Kashmiri Pulao', 'Plain & Butter Roti', 'Missi Roti', 'Salad', 'Mixed Pickle', 'Besan Barfi (L)', 'Fryums', 'Boondi Raita (L)'],
-        snacks: ['Aaloo Pyaz Kachori with kadhi', 'Tea', 'Vanila Shake'],
-        dinner: ['Dry Bhindi Masala', 'Mix Dal', 'Plain & Butter Roti', 'Veg Biryani', 'Salad', 'Lemon Pickle', 'Rasgulla (L)']
+        breakfast: ['Matar Kulcha / Boiled Eggs (L)', 'Sprouts', 'Brown Bread (Peanut Butter / Butter / Jam)*', 'Tea', 'Milk', 'Cornflakes / Bournvita / Haldi / Coffee', 'Fruit (L)'],
+        lunch: ['Dry Chole Masala', 'Moong Dal Tamatar', 'Veg Szechwan Fried Rice', 'Plain & Butter Roti', 'Missi Roti', 'Salad', 'Mixed Pickle', 'Besan Barfi (L)', 'Fryums', 'Boondi Raita (L)'],
+        snacks: ['Chowmein', 'Ketchup', 'Tea', 'Rooafza'],
+        dinner: ['Dry Bhindi Masala', 'Urad Dal', 'Plain & Butter Roti', 'Veg Biryani', 'Salad', 'Lemon Pickle', 'Rasgulla (L)']
     },
     // Saturday (6)
     {
         day: 'Saturday',
-        breakfast: ['Dosa & Sambhar-Chutney / Omelet (L)', 'Sprouts', 'White Bread (Peanut Butter / Butter / Jam)*', 'Tea', 'Milk', 'Cornflakes / Bournvita / Coffee', 'Fruit (L)'],
-        lunch: ['Bati', 'Dal Urad Tadka', 'Garlic Chutney', 'Plain & Butter Roti', 'Fried Mirchi', 'Jeera Rice', 'Raw Onion', 'Mixed Pickle', 'Masala Chhach (L)'],
-        snacks: ['Patty', 'Chopped Onion', 'Ketchup', 'Rooafza', 'Tea'],
-        dinner: ['Paneer Paratha', 'Matar sabji', 'Dahi', 'Garlic Chutney', 'Plain & Butter Roti', 'Fried Rice', 'Salad', 'Mixed Pickle', 'Ice Cream (L)']
+        breakfast: ['Idly & Sambhar-Chutney / Omelet (L)', 'Sprouts', 'White Bread (Peanut Butter / Butter / Jam)*', 'Tea', 'Milk', 'Cornflakes / Bournvita / Coffee', 'Fruit (L)'],
+        lunch: ['Bati', 'Mix Daal', 'Garlic Chutney', 'Plain & Butter Roti', 'Fried Mirchi', 'Veg Biryani', 'Raw Onion', 'Mixed Pickle', 'Masala Chhach (L)'],
+        snacks: ['Bread Rolls (2Pcs)', 'Green Chutney', 'Ketchup', 'Shikanji', 'Tea'],
+        dinner: ['Kadhai Paneer', 'Arhar Dal', 'Plain & Butter Roti', 'Jeera Rice', 'Salad', 'Lemon Pickle', 'Boondi Ladoo (L)']
     }
 ];
 
